@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include "show.h" 
  
 typedef unsigned char *byte_pointer;
 
@@ -109,6 +109,9 @@ printf("Calling string_ueg\n");
 string_ueg();
 printf("Calling string_leg\n");
 string_leg();
+show_short(358);
+show_long(274877906944);
+show_double(3.1415926535);
  }
 return 0;
 }
