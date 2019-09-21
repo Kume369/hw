@@ -1,5 +1,5 @@
-#ifdef __SHOW_H_
-#define __SHOW_H_
+#ifndef SHOW_H
+#define SHOW_H
 #include <stdio.h>
 void show_short;
 void show_long;
