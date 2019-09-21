@@ -1,5 +1,4 @@
-#include"show.h" 
-#include <stdio.h>
+#include "show.h"
 
 typedef unsigned char *byte_pointer;
 
