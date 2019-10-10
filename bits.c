@@ -204,7 +204,7 @@ int isAsciiDigit(int x) {
   int a=0xF0>>24;
   int b=0xc6>>24;
   int c=~(0x80<<24);
-  return !(!!((x&a)^0x30)+(((unsigned)(x+(b&c))>>31));
+  return !(!!((x&a)^0x30)+(((x+(b&c))>>31)&1);
 }
 /* 
  * conditional - same as x ? y : z 
@@ -224,9 +224,8 @@ int conditional(int x, int y, int z) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-   int a=(!((unsigned)x>>31))&((unsigned)y>>31);
-   int b= (!((x+(~y+1))))|(((unsigned)x>>31)&!((unsigned)y>>31))|(((unsigned)(x+(~y+1)))>>31);
-  return !a&b;
+ 
+  return (!(!((x>>31)&1))&((y>>31)&1))&(!((x+(~y+1))))|(((x>>31)&1)&!((y>>31)&1))|(((x+(~y+1))>>31)&1);
 }
 //4
 /* 
@@ -253,7 +252,7 @@ int logicalNeg(int x) {
  *  Rating: 4
  */
 int howManyBits(int x) {
-	unsigned y=x^(x>>31);
+	int y=x^(x>>31);
 	int a1=!!(y>>16);
 	int b1=8+(a1<<4);
 	int a2=!(y>>b1);
