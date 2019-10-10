@@ -201,7 +201,7 @@ int negate(int x) {
  *   Rating: 3
  */
 int isAsciiDigit(int x) {
-int a=~0xF;
+  int a=~0xF;
   int b=0xc6;
   int c=~((0x80<<24)+(0xFF));
   return !((!!((x&a)^0x30))+(((x+(b+c))>>31)&1));
@@ -224,9 +224,13 @@ int conditional(int x, int y, int z) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-   int a=(!((unsigned)x>>31))&((unsigned)y>>31);
-   int b= (!((x+(~y+1))))|(((unsigned)x>>31)&!((unsigned)y>>31))|(((unsigned)(x+(~y+1)))>>31);
-  return !a&b;
+     int x1=x,y1=y;
+     int a=(x1>>31)&1;
+     int b=(y1>>31)&1;
+     int c=a^b;
+     int d=((x+(~y+1))>>31)&1;
+     int e=x^y;
+     return !e|(!c&d)|(c&a);
 }
 //4
 /* 
@@ -253,7 +257,7 @@ int logicalNeg(int x) {
  *  Rating: 4
  */
 int howManyBits(int x) {
-	unsigned y=x^(x>>31);
+	int y=x^(x>>31);
 	int a1=!!(y>>16);
 	int b1=8+(a1<<4);
 	int a2=!(y>>b1);
@@ -279,14 +283,18 @@ int howManyBits(int x) {
  *   Rating: 4
  */
 unsigned floatScale2(unsigned uf) {
-	float *f=(float *)&uf;
-	float tf=2*(*f);
-        unsigned *a;
-        int b=~(0x80<<24);
+        int a=~((0xFF<<24)+(0x80<<16));
         int c=(0x7F<<24)+(0x80<<16);
-	if((uf&b)>c) return uf;
-	else a=(unsigned *)&tf;
-  return *a;
+        int b=~((0x7F<<24)+(0x80<<16));
+        int exp=(uf&c)>>23;
+        if(exp==0xFF) return uf;
+        if(exp==0&&(uf&a)==0) return uf;
+        if(exp==0) {int f=(uf&a)<<1; uf=(uf&(~a))+f;}
+        else{ exp+=1;
+        exp=exp<<23;
+        uf=uf&b;
+        uf=uf+exp;}
+        return uf;
 }
 /* 
  * floatFloat2Int - Return bit-level equivalent of expression (int) f
@@ -301,14 +309,23 @@ unsigned floatScale2(unsigned uf) {
  *   Rating: 4
  */
 int floatFloat2Int(unsigned uf) {
-	float *f=(float *)&uf;
-	int x=(int) *f;
-        int a=~(0x80<<24);
-        int b=(0x7F<<24)+(0x80<<16);
-        unsigned c=0x80<<24;
-	if((uf&a)>=b) return c;
-	else return x;
-}
+        int a,s,frac,v,c,b,exp;
+	 a=(0x7F<<24)+(0x80<<16);
+        b=~((0xFF<<24)+(0x80<<16));
+        c=0x80<<16;
+        frac=(uf&b)+c;
+        exp=((uf&a)>>23)-127;
+        if((uf&a)==0) return 0;
+        if(exp>31) return (0x80u<<24);
+        if(exp<0) return 0;
+        s=(uf>>31);
+        if(s==0) s=1;
+        else s=-1;
+        if(exp>23) frac=frac<<(exp-23);
+        else frac=frac>>(23-exp);
+        v=s*frac;
+        return v;}
+
 /* 
  * floatPower2 - Return bit-level equivalent of the expression 2.0^x
  *   (2.0 raised to the power x) for any 32-bit integer x.
@@ -323,19 +340,20 @@ int floatFloat2Int(unsigned uf) {
  *   Rating: 4
  */
 unsigned floatPower2(int x) {
-	float result = 1.0;
-  float p2 = 2.0;
-  int a=0x80<<24;
-int recip=(x<0);
-  if ((unsigned)x == a) {
-      return 0;
-  }
-  if(recip) {x=-x; p2=0.5;}
-  while(x>0){ 
-  if(x&0x1) result=result*p2; 
-  p2=p2*p2;
-  x>>=1;
-}
-  unsigned *a=(unsigned *)&result;
-  return *a;
+        int e;
+        unsigned v;
+        int f;
+	if(x<=-150) return 0;
+        if(x>=129) return ((0x7F<<24)+(0x80<<16));
+        if(x>=-126){
+         e=x+127;
+         e=e<<23;
+         v=e;
+         return v;}
+         else{
+          f=-126-x;
+          f=23-f;
+          f=1<<f;
+          v=(0x80<<24)+f;
+          return v;}
 }
