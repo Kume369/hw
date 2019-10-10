@@ -165,7 +165,7 @@ int tmin(void) {
  *   Rating: 1
  */
 int isTmax(int x) {
-  return !((x>>31)+(x<<1)^(0x7FFFFFFF<<1));
+  return (!(x+1+x+1))&(!!(x+1));
 }
 /* 
  * allOddBits - return 1 if all odd-numbered bits in word set to 1
@@ -176,7 +176,9 @@ int isTmax(int x) {
  *   Rating: 2
  */
 int allOddBits(int x) {
-  return !((x|0x55555555)+1);
+  int a=0x55;
+  a=a+(a<<8)+(a<<16)+(a<<24);
+  return !((x|a)+1);
 }
 /* 
  * negate - return -x 
@@ -199,7 +201,10 @@ int negate(int x) {
  *   Rating: 3
  */
 int isAsciiDigit(int x) {
-  return !(!((x&0xF0)^0x30)+!(((unsigned)(x+0xFFFFFFF7))>>31);
+  int a=0xF0>>24;
+  int b=0xc6>>24;
+  int c=~(0x80<<24);
+  return !(!!((x&a)^0x30)+(((unsigned)(x+(b&c))>>31));
 }
 /* 
  * conditional - same as x ? y : z 
@@ -219,7 +224,9 @@ int conditional(int x, int y, int z) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-  return !(x+(~y+1))&(x+(~y+1)>>31);
+   int a=(!((unsigned)x>>31))&((unsigned)y>>31);
+   int b= (!((x+(~y+1))))|(((unsigned)x>>31)&!((unsigned)y>>31))|(((unsigned)(x+(~y+1)))>>31);
+  return !a&b;
 }
 //4
 /* 
@@ -246,17 +253,17 @@ int logicalNeg(int x) {
  *  Rating: 4
  */
 int howManyBits(int x) {
-	int y=(((~((!x)<<31))>>31)&x)+((~(!x)+1)&(~x));
-	int a1=!!(y<<16);
+	unsigned y=x^(x>>31);
+	int a1=!!(y>>16);
 	int b1=8+(a1<<4);
-	int a2=!!(y<<b1);
+	int a2=!(y>>b1);
 	int b2=b1+(4+(~(a2<<3)+1));
-	int a3=!!(y<<b2);
+	int a3=!(y>>b2);
 	int b3=b2+(2+(~(a3<<2)+1));
-	int a4=!!(y<<b3);
+	int a4=!(y>>b3);
 	int b4=b3+(1+(~(a4<<1)+1));
-	int a5=!!(y<<b4);
-	int bit=b4+a5;
+	int a5=!!(y>>b4);
+	int bit=b4+a5+(!!y&((y>>31)^1));
   return bit;
 }
 //float
@@ -274,8 +281,11 @@ int howManyBits(int x) {
 unsigned floatScale2(unsigned uf) {
 	float *f=(float *)&uf;
 	float tf=2*(*f);
-	if((uf&0x7FFFFFFF)>0x7F800000) return uf;
-	else unsigned *a=(unsigned *)&tf;
+        unsigned *a;
+        int b=~(0x80<<24);
+        int c=(0x7F<<24)+(0x80<<16);
+	if((uf&b)>c) return uf;
+	else a=(unsigned *)&tf;
   return *a;
 }
 /* 
@@ -292,8 +302,11 @@ unsigned floatScale2(unsigned uf) {
  */
 int floatFloat2Int(unsigned uf) {
 	float *f=(float *)&uf;
-	int x=(int) f;
-	if((uf&0x7FFFFFFF)>=0x7F800000) return 0x80000000u;
+	int x=(int) *f;
+        int a=~(0x80<<24);
+        int b=(0x7F<<24)+(0x80<<16);
+        unsigned c=0x80<<24;
+	if((uf&a)>=b) return c;
 	else return x;
 }
 /* 
@@ -312,11 +325,17 @@ int floatFloat2Int(unsigned uf) {
 unsigned floatPower2(int x) {
 	float result = 1.0;
   float p2 = 2.0;
-  if ((unsigned)x == 0x80000000) {
+  int a=0x80<<24;
+int recip=(x<0);
+  if ((unsigned)x == a) {
       return 0;
   }
-  if(x>0) result=result*(1<<x);
-  else result=result*(1>>(-x));
+  if(recip) {x=-x; p2=0.5;}
+  while(x>0){ 
+  if(x&0x1) result=result*p2; 
+  p2=p2*p2;
+  x>>=1;
+}
   unsigned *a=(unsigned *)&result;
   return *a;
 }
