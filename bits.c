@@ -152,8 +152,8 @@ int bitXor(int x, int y) {
  *   Rating: 1
  */
 int tmin(void) {
-   int x; 
-  return (x^~x)<<31;
+ 
+  return (0x80<<24);
 
 }
 //2
@@ -283,9 +283,9 @@ int howManyBits(int x) {
  *   Rating: 4
  */
 unsigned floatScale2(unsigned uf) {
-        int a=~((0xFF<<24)+(0x80<<16));
-        int c=(0x7F<<24)+(0x80<<16);
-        int b=~((0x7F<<24)+(0x80<<16));
+        int a=0X7FFFFF;
+        int c=0x7f800000;
+        int b=0X807FFFFF;
         int exp=(uf&c)>>23;
         if(exp==0xFF) return uf;
         if(exp==0&&(uf&a)==0) return uf;
@@ -310,13 +310,13 @@ unsigned floatScale2(unsigned uf) {
  */
 int floatFloat2Int(unsigned uf) {
         int a,s,frac,v,c,b,exp;
-	 a=(0x7F<<24)+(0x80<<16);
-        b=~((0xFF<<24)+(0x80<<16));
-        c=0x80<<16;
+	 a=0x7F800000;
+        b=0x7FFFFF;
+        c=0x800000;
         frac=(uf&b)+c;
         exp=((uf&a)>>23)-127;
         if((uf&a)==0) return 0;
-        if(exp>31) return (0x80u<<24);
+        if(exp>31) return (0x80000000u);
         if(exp<0) return 0;
         s=(uf>>31);
         if(s==0) s=1;
@@ -344,7 +344,7 @@ unsigned floatPower2(int x) {
         unsigned v;
         int f;
 	if(x<=-150) return 0;
-        if(x>=129) return ((0x7F<<24)+(0x80<<16));
+        if(x>=129) return (0x7F800000);
         if(x>=-126){
          e=x+127;
          e=e<<23;
@@ -354,6 +354,6 @@ unsigned floatPower2(int x) {
           f=-126-x;
           f=23-f;
           f=1<<f;
-          v=(0x80<<24)+f;
+          v=(0x80000000)+f;
           return v;}
 }
