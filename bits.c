@@ -204,7 +204,7 @@ int isAsciiDigit(int x) {
   int a=0xF0>>24;
   int b=0xc6>>24;
   int c=~(0x80<<24);
-  return !(!!((x&a)^0x30)+(((x+(b&c))>>31)&1);
+  return !(!!((x&a)^0x30))+(((x+(b&c))>>31)&1);
 }
 /* 
  * conditional - same as x ? y : z 
@@ -224,8 +224,12 @@ int conditional(int x, int y, int z) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
- 
-  return (!(!((x>>31)&1))&((y>>31)&1))&(!((x+(~y+1))))|(((x>>31)&1)&!((y>>31)&1))|(((x+(~y+1))>>31)&1);
+     int x1=x,y1=y;
+     int a=(x1>>31)&1;
+     int b=(y1>>31)&1;
+     int c=a^b;
+     int d=((x+~y+1)>>31)&1;
+     return(!c&d)|((!c)^a);
 }
 //4
 /* 
@@ -278,14 +282,14 @@ int howManyBits(int x) {
  *   Rating: 4
  */
 unsigned floatScale2(unsigned uf) {
-	float *f=(float *)&uf;
-	float tf=2*(*f);
-        unsigned *a;
-        int b=~(0x80<<24);
         int c=(0x7F<<24)+(0x80<<16);
-	if((uf&b)>c) return uf;
-	else a=(unsigned *)&tf;
-  return *a;
+        int b=~(0x7F<<24)+(0x80<<16);
+        int exp=((unsigned)uf&c)>>23;
+        if(exp==0xFF) return uf;
+        exp+=1;
+        uf=uf&b;
+        uf=uf+exp;
+        return uf;
 }
 /* 
  * floatFloat2Int - Return bit-level equivalent of expression (int) f
@@ -300,13 +304,27 @@ unsigned floatScale2(unsigned uf) {
  *   Rating: 4
  */
 int floatFloat2Int(unsigned uf) {
-	float *f=(float *)&uf;
-	int x=(int) *f;
-        int a=~(0x80<<24);
-        int b=(0x7F<<24)+(0x80<<16);
-        unsigned c=0x80<<24;
-	if((uf&a)>=b) return c;
-	else return x;
+        int s,e,f,frac,cnt,v,b;
+	int a=(0x7F<<24)+(0x80<<16);
+        int exp=((unsigned)uf&a)>>23;
+        if(exp==0xFF) return (0x80u<<24);
+        if(exp==0) return 0;
+        else {
+        s=(uf>>31);
+        if(s==0) s=1;
+        else s=-1;
+        e=exp-(1<<7)+1;
+        e=1<<e;
+        b=~((0xFF<<24)+(0x80<<16));
+        frac=uf&b;
+        f=frac;
+        cnt=0;
+        while(f){
+           f>>=1;
+           cnt++;}
+        frac=frac*(1>>cnt)+1;
+        v=s*frac*e;
+        return v;}
 }
 /* 
  * floatPower2 - Return bit-level equivalent of the expression 2.0^x
@@ -322,19 +340,19 @@ int floatFloat2Int(unsigned uf) {
  *   Rating: 4
  */
 unsigned floatPower2(int x) {
-	float result = 1.0;
-  float p2 = 2.0;
-  int a=0x80<<24;
-int recip=(x<0);
-  if ((unsigned)x == a) {
-      return 0;
-  }
-  if(recip) {x=-x; p2=0.5;}
-  while(x>0){ 
-  if(x&0x1) result=result*p2; 
-  p2=p2*p2;
-  x>>=1;
-}
-  unsigned *a=(unsigned *)&result;
-  return *a;
+        int e;
+        unsigned v;
+        int f;
+	if(x<=-150||x>=129) return 0;
+        if(x>=-126){
+         e=x+127;
+         e=e<<23;
+         v=(0x80<<24)+e;
+         return v;}
+         else{
+          f=-126-x;
+          f=23-f;
+          f=1<<f;
+          v=(0x80<<24)+f;
+          return v;}
 }
