@@ -324,7 +324,7 @@ int floatFloat2Int(unsigned uf) {
         if(exp<0) return 0;
         s=(uf>>31);
         if(s==0) s=1;
-        else s=-1;
+        else s=0xFFFFFFFF;
         if(exp>23) frac=frac<<(exp-23);
         else frac=frac>>(23-exp);
         v=s*frac;
@@ -344,20 +344,11 @@ int floatFloat2Int(unsigned uf) {
  *   Rating: 4
  */
 unsigned floatPower2(int x) {
-        int e;
-        unsigned v;
-        int f;
-	if(x<-149) return 0;
-        if(x>128) return (0x7F800000);
-        if(x>-127){
-         e=x+127;
-         e=e<<23;
-         v=e;
-         return v;}
-         else{
-          f=-126-x;
-          f=23-f;
-          f=1<<f;
-          v=(0x80000000)+f;
-          return v;}
+        int bias,s;
+        if(x<-126){
+        if(x<-149) return 0;
+        s=x+149;x=0;bias=1;}
+        else if(x>127){x=0xFF;bias=0;s=23;}
+        else {bias=127;s=23;}
+        return (x+bias)<<s;
 }
