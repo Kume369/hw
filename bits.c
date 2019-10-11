@@ -165,6 +165,7 @@ int tmin(void) {
  *   Rating: 1
  */
 int isTmax(int x) {
+ 
   return (!(x+1+x+1))&(!!(x+1));
 }
 /* 
@@ -201,10 +202,9 @@ int negate(int x) {
  *   Rating: 3
  */
 int isAsciiDigit(int x) {
-  int a=~0xF;
   int b=0xc6;
   int c=~((0x80<<24)+(0xFF));
-  return !((!!((x&a)^0x30))+(((x+(b+c))>>31)&1));
+  return !(((x+(~0x30+1))>>31)+((x+(b+c))>>31));
 }
 /* 
  * conditional - same as x ? y : z 
@@ -214,7 +214,8 @@ int isAsciiDigit(int x) {
  *   Rating: 3
  */
 int conditional(int x, int y, int z) {
-  return (((~((!x)<<31))>>31)&y)+((~(!x)+1)&z);
+  int a=!x;
+  return (((~(a<<31))>>31)&y)+((~a+1)&z);
 }
 /* 
  * isLessOrEqual - if x <= y  then return 1, else return 0 
@@ -286,11 +287,13 @@ unsigned floatScale2(unsigned uf) {
         int a=0X7FFFFF;
         int c=0x7f800000;
         int b=0X807FFFFF;
+        int d=uf&a;
         int exp=(uf&c)>>23;
         if(exp==0xFF) return uf;
-        if(exp==0&&(uf&a)==0) return uf;
-        if(exp==0) {int f=(uf&a)<<1; uf=(uf&(~a))+f;}
-        else{ exp+=1;
+        if(exp==0){if(d==0) return uf;
+        else {int f=d<<1; uf=(uf&(~a))+f;}
+        }
+        else{ exp=exp+1;
         exp=exp<<23;
         uf=uf&b;
         uf=uf+exp;}
@@ -309,13 +312,14 @@ unsigned floatScale2(unsigned uf) {
  *   Rating: 4
  */
 int floatFloat2Int(unsigned uf) {
-        int a,s,frac,v,c,b,exp;
+        int a,s,frac,v,c,b,exp,d;
 	 a=0x7F800000;
         b=0x7FFFFF;
         c=0x800000;
+        d=uf&a;
         frac=(uf&b)+c;
-        exp=((uf&a)>>23)-127;
-        if((uf&a)==0) return 0;
+        exp=(d>>23)-127;
+        if(d==0) return 0;
         if(exp>31) return (0x80000000u);
         if(exp<0) return 0;
         s=(uf>>31);
@@ -343,9 +347,9 @@ unsigned floatPower2(int x) {
         int e;
         unsigned v;
         int f;
-	if(x<=-150) return 0;
-        if(x>=129) return (0x7F800000);
-        if(x>=-126){
+	if(x<-149) return 0;
+        if(x>128) return (0x7F800000);
+        if(x>-127){
          e=x+127;
          e=e<<23;
          v=e;
